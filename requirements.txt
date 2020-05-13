@@ -52,6 +52,7 @@ marshmallow==2.19.5       # via flask-appbuilder, marshmallow-enum, marshmallow-
 more-itertools==8.1.0     # via zipp
 msgpack==0.6.2
 numpy==1.18.1             # via pandas, pyarrow
+openpyxl==3.0.3
 pandas==0.25.3
 parsedatetime==2.5
 pathlib2==2.3.5

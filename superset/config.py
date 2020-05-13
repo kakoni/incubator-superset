@@ -347,6 +347,8 @@ ALLOWED_EXTENSIONS = {"csv", "tsv"}
 # note: index option should not be overridden
 CSV_EXPORT = {"encoding": "utf-8"}
 
+XLSX_EXPORT = {"encoding": "utf-8"}
+
 # ---------------------------------------------------
 # Time grain configurations
 # ---------------------------------------------------

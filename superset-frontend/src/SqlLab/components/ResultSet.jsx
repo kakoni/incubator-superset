@@ -1,4 +1,4 @@
-/**
+    /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -33,6 +33,7 @@ import { prepareCopyToClipboardTabularData } from '../../utils/common';
 const propTypes = {
   actions: PropTypes.object,
   csv: PropTypes.bool,
+  xlsx: PropTypes.bool,
   query: PropTypes.object,
   search: PropTypes.bool,
   showSql: PropTypes.bool,
@@ -47,6 +48,7 @@ const defaultProps = {
   visualize: true,
   showSql: false,
   csv: true,
+  xlsx: true,
   actions: {},
   cache: false,
   database: {},
@@ -135,7 +137,7 @@ export default class ResultSet extends React.PureComponent {
     }
   }
   renderControls() {
-    if (this.props.search || this.props.visualize || this.props.csv) {
+    if (this.props.search || this.props.visualize || this.props.csv || this.props.xlsx) {
       let data = this.props.query.results.data;
       if (this.props.cache && this.props.query.cached) {
         data = this.state.data;
@@ -158,6 +160,15 @@ export default class ResultSet extends React.PureComponent {
                     href={'/superset/csv/' + this.props.query.id}
                   >
                     <i className="fa fa-file-text-o" /> {t('.CSV')}
+                  </Button>
+                )}
+
+                {this.props.xlsx && (
+                  <Button
+                    bsSize="small"
+                    href={'/superset/xlsx/' + this.props.query.id}
+                  >
+                    <i className="fa fa-file-text-o" /> {t('.XLSX')}
                   </Button>
                 )}
 
