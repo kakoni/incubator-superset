@@ -56,6 +56,7 @@ marshmallow==2.19.5       # via flask-appbuilder, marshmallow-enum, marshmallow-
 more-itertools==8.1.0     # via zipp
 msgpack==0.6.2            # via apache-superset (setup.py)
 numpy==1.18.1             # via pandas, pyarrow
+openpyxl==3.0.3
 pandas==1.0.3             # via apache-superset (setup.py)
 parsedatetime==2.5        # via apache-superset (setup.py)
 pathlib2==2.3.5           # via apache-superset (setup.py)

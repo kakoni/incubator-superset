@@ -17,6 +17,7 @@
 # pylint: disable=C,R,W
 import logging
 import re
+import io
 from collections import defaultdict
 from contextlib import closing
 from datetime import datetime, timedelta
@@ -101,6 +102,7 @@ from .base import (
     common_bootstrap_payload,
     create_table_permissions,
     CsvResponse,
+    XlsxResponse,
     data_payload_response,
     DeleteMixin,
     generate_download_headers,
@@ -623,7 +625,7 @@ class Superset(BaseSupersetView):
         return self.json_response({"data": viz_obj.get_samples()})
 
     def generate_json(
-        self, viz_obj, csv=False, query=False, results=False, samples=False
+        self, viz_obj, csv=False, xlsx=False, query=False, results=False, samples=False
     ):
         if csv:
             return CsvResponse(
@@ -631,6 +633,14 @@ class Superset(BaseSupersetView):
                 status=200,
                 headers=generate_download_headers("csv"),
                 mimetype="application/csv",
+            )
+
+        if xlsx:
+            return XlsxResponse(
+                viz_obj.get_xlsx(),
+                status=200,
+                headers=generate_download_headers("xlsx"),
+                mimetype="application/xlsx",
             )
 
         if query:
@@ -702,6 +712,7 @@ class Superset(BaseSupersetView):
 
         TODO: break into one endpoint for each return shape"""
         csv = request.args.get("csv") == "true"
+        xlsx = request.args.get("xlsx") == "true"
         query = request.args.get("query") == "true"
         results = request.args.get("results") == "true"
         samples = request.args.get("samples") == "true"
@@ -721,7 +732,7 @@ class Superset(BaseSupersetView):
             )
 
             return self.generate_json(
-                viz_obj, csv=csv, query=query, results=results, samples=samples
+                viz_obj, csv=csv, xlsx=xlsx, query=query, results=results, samples=samples
             )
         except SupersetException as ex:
             return json_error_response(utils.error_msg_from_exception(ex))
@@ -1849,6 +1860,7 @@ class Superset(BaseSupersetView):
         dash_save_perm = security_manager.can_access("can_save_dash", "Superset")
         superset_can_explore = security_manager.can_access("can_explore", "Superset")
         superset_can_csv = security_manager.can_access("can_csv", "Superset")
+        superset_can_xlsx = security_manager.can_access("can_xlsx", "Superset")
         slice_can_edit = security_manager.can_access("can_edit", "SliceModelView")
 
         standalone_mode = (
@@ -1878,6 +1890,7 @@ class Superset(BaseSupersetView):
                 "dash_edit_perm": dash_edit_perm,
                 "superset_can_explore": superset_can_explore,
                 "superset_can_csv": superset_can_csv,
+                "superset_can_xlsx": superset_can_xlsx,
                 "slice_can_edit": slice_can_edit,
             }
         )
@@ -2587,6 +2600,67 @@ class Superset(BaseSupersetView):
         }
         logger.info(
             f"CSV exported: {repr(event_info)}", extra={"superset_event": event_info}
+        )
+        return response
+
+    @has_access
+    @expose("/xlsx/<client_id>")
+    @event_logger.log_this
+    def xlsx(self, client_id):
+        """Download the query results as xlsx."""
+        logging.info("Exporting XLSX file [{}]".format(client_id))
+        query = db.session.query(Query).filter_by(client_id=client_id).one()
+
+        rejected_tables = security_manager.rejected_tables(
+            query.sql, query.database, query.schema
+        )
+        if rejected_tables:
+            flash(security_manager.get_table_access_error_msg(rejected_tables))
+            return redirect("/")
+        blob = None
+        if results_backend and query.results_key:
+            logging.info(
+                "Fetching XLSX from results backend " "[{}]".format(query.results_key)
+            )
+            blob = results_backend.get(query.results_key)
+
+        # Writes Excel data into IO
+        data = io.BytesIO()
+        if blob:
+            logger.info("Decompressing")
+            payload = utils.zlib_decompress(
+                blob, decode=not results_backend_use_msgpack
+            )
+            obj = _deserialize_results_payload(
+                payload, query, results_backend_use_msgpack
+            )
+            columns = [c["name"] for c in obj["columns"]]
+            df = pd.DataFrame.from_records(obj["data"], columns=columns)
+            logger.info("Using pandas to convert to CSV")
+            df.to_excel(data, index=False, **config.get('XLSX_EXPORT'))
+        else:
+            logging.info('Running a query to turn into XLSX')
+            sql = query.select_sql or query.executed_sql
+            df = query.database.get_df(sql, query.schema)
+            # TODO(bkyryliuk): add compression=gzip for big files.
+            df.to_excel(data, index=False, **config.get('XLSX_EXPORT'))
+
+        data.seek(0)
+        response = Response(data.read(), mimetype='text/xlsx')
+        response.headers[
+            "Content-Disposition"
+        ] = f"attachment; filename={query.name}.xlsx"
+        event_info = {
+            "event_type": "data_export",
+            "client_id": client_id,
+            "row_count": len(df.index),
+            "database": query.database.name,
+            "schema": query.schema,
+            "sql": query.sql,
+            "exported_format": "xlsx",
+        }
+        logger.info(
+            f"XLSX exported: {repr(event_info)}", extra={"superset_event": event_info}
         )
         return response
 

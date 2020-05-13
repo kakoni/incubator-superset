@@ -1,4 +1,4 @@
-# Licensed to the Apache Software Foundation (ASF) under one
+    # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
 # regarding copyright ownership.  The ASF licenses this file
@@ -89,6 +89,7 @@ setup(
         "isodate",
         "markdown>=3.0",
         "msgpack>=0.6.1, <0.7.0",
+        "openpyxl>=2.6.2",
         "pandas>=1.0.3, <1.1",
         "parsedatetime",
         "pathlib2",

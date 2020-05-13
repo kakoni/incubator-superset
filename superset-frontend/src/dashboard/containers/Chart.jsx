@@ -72,6 +72,7 @@ function mapStateToProps(
     isExpanded: !!dashboardState.expandedSlices[id],
     supersetCanExplore: !!dashboardInfo.superset_can_explore,
     supersetCanCSV: !!dashboardInfo.superset_can_csv,
+    supersetCanXLSX: !!dashboardInfo.superset_can_xlsx,
     sliceCanEdit: !!dashboardInfo.slice_can_edit,
   };
 }
