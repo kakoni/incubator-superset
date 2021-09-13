@@ -85,10 +85,11 @@ services:
       - /home/superset-websocket/node_modules
       - /home/superset-websocket/dist
     environment:
-      - PORT=8080
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_SSL=false
+      PORT: 8080
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_SSL: "false"
+      JWT_SECRET: test123-test123-test123-test123-test123-test123-test123
 
   superset-init:
     image: *superset-image
