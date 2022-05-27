@@ -747,13 +747,6 @@ class TestCore(SupersetTestCase):
         data = csv.reader(io.StringIO(resp))
         expected_data = csv.reader(io.StringIO(f"name\n{name}\n"))
 
-        client_id = "{}".format(random.getrandbits(64))[:10]
-        self.run_sql(sql, client_id, raise_on_error=True)
-
-        resp = self.get_resp("/superset/csv/{}".format(client_id))
-        data = csv.reader(io.StringIO(resp))
-        expected_data = csv.reader(io.StringIO(f"name\n{name}\n"))
-
         self.assertEqual(list(expected_data), list(data))
         self.logout()
 
